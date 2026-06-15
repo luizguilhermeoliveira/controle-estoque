@@ -11,7 +11,7 @@
 
 ## Etapa 1 — Fundação de dados
 
-**Status**: `[ ]` pendente
+**Status**: `[x]` concluída
 
 **Objetivo**: Criar todo o schema do domínio via migrations, os models refletindo o schema com relacionamentos explícitos e `$fillable`, e seeders com dados iniciais (usuário admin + exemplos), deixando a base pronta para as funcionalidades.
 
