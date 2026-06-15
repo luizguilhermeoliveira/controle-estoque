@@ -13,6 +13,10 @@ desenvolvedor Laravel.
 ## 2. Ambiente e execução
 - Laravel 13 + PHP 8.4, MariaDB 11, Redis, Nginx — 100% dockerizado.
 - App em http://localhost:3000. Banco: host interno `db`, porta 3306 (host: 3307).
+- Inspeção visual do banco: Adminer em http://localhost:8080 (porta configurável via
+  `ADMINER_PORT`). Conectar com sistema MySQL, servidor `db`, e as credenciais do `.env`
+  (`DB_USERNAME`/`DB_PASSWORD`/`DB_DATABASE`). É a forma padrão de acompanhar o estado do
+  banco durante o desenvolvimento.
 - Comandos SEMPRE dentro do container `app`:
   - `docker compose exec app php artisan <comando>`
   - `docker compose exec app composer <comando>`
@@ -92,7 +96,9 @@ Relacionamentos:
 
 ## 11. DevOps (já implementado)
 - Dockerfile (PHP-FPM 8.4 + extensões), Nginx, docker-compose (app + nginx + mariadb
-  + redis). App em localhost:3000 (porta configurável via env).
+  + redis + adminer). App em localhost:3000 (porta configurável via env).
+- Adminer (serviço `adminer`) para inspeção visual do banco em localhost:8080 — ferramenta
+  de desenvolvimento; não faz parte da aplicação.
 
 ## 12. Entrega e critérios de avaliação
 Entrega: repositório GitHub; README detalhado (instalação, variáveis de ambiente,

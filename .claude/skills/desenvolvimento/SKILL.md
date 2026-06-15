@@ -11,7 +11,9 @@ Implementa a etapa solicitada do projeto, seguindo as convenções definidas.
 1. Leia `docs/CONTEXTO.md` (arquitetura, domínio, regras de negócio).
 2. Leia `docs/PLANO.md` e localize a etapa pedida. Se o usuário disser "próxima etapa",
    pegue a primeira com status `[ ]`.
-3. Implemente APENAS a etapa solicitada, salvo instrução em contrário. Em dúvida de
+3. Leia `docs/MODULOS.md` (documentação viva do que já existe) para reaproveitar
+   módulos/arquivos já implementados em vez de recriá-los.
+4. Implemente APENAS a etapa solicitada, salvo instrução em contrário. Em dúvida de
    escopo, pergunte antes.
 
 ## Convenções a respeitar (do CONTEXTO)
@@ -32,4 +34,7 @@ Implementa a etapa solicitada do projeto, seguindo as convenções definidas.
 ## Ao terminar
 1. Verifique: rode migrations/testes pertinentes e confirme que sobe sem erro.
 2. Atualize `docs/PLANO.md` marcando a etapa como `[x]`.
-3. Sugira uma mensagem de commit descritiva e pergunte antes de commitar/enviar.
+3. Atualize `docs/MODULOS.md` acrescentando/ajustando a seção da etapa: descreva os
+   arquivos criados, suas responsabilidades e os pontos de extensão para as próximas
+   etapas (documentação viva do projeto).
+4. Sugira uma mensagem de commit descritiva e pergunte antes de commitar/enviar.

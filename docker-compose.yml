@@ -61,6 +61,19 @@ services:
     networks:
       - estoque
 
+  adminer:
+    image: adminer:latest
+    container_name: estoque-adminer
+    restart: unless-stopped
+    ports:
+      - "${ADMINER_PORT:-8080}:8080"
+    environment:
+      ADMINER_DEFAULT_SERVER: db
+    depends_on:
+      - db
+    networks:
+      - estoque
+
 volumes:
   dbdata:
 
