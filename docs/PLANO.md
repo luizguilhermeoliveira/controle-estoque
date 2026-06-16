@@ -91,7 +91,7 @@ docker compose exec app php artisan route:list
 
 ## Etapa 3 — Layout base + Auditoria
 
-**Status**: `[ ]` pendente
+**Status**: `[x]` concluída
 
 **Objetivo**: Estabelecer o layout Bootstrap reaproveitável (navbar, container, flash
 messages, assets) e a infraestrutura transversal de auditoria (`AuditLogService`) que as

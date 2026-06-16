@@ -110,3 +110,44 @@ O usuário autenticado será o responsável registrado nas movimentações e aud
   botão de logout (form `POST /logout` + `@csrf`), e migra a `welcome` para um dashboard.
 - `Auth::user()` / `auth()->id()` fornece o responsável para `movimentacoes.user_id` e
   `audit_logs.user_id` nas etapas seguintes.
+
+---
+
+## Etapa 3 — Layout base + Auditoria
+
+Layout Bootstrap reaproveitável (navbar, flash messages, assets) e a infraestrutura
+transversal de auditoria (`AuditLogService`) que as demais etapas consomem.
+
+### Views de layout (`resources/views`)
+
+| Arquivo | Responsabilidade |
+|---------|------------------|
+| `layouts/app.blade.php` | Layout master. `@yield('titulo')` e `@yield('conteudo')`; `@stack('styles')`/`@stack('scripts')` para assets por página. Inclui via CDN: Bootstrap 5 (+ Icons), DataTables (integração Bootstrap 5), jQuery, SweetAlert2. Estrutura navbar + `main.container` + footer (layout sticky com flexbox). Inclui `partials.navbar` e `partials.alerts`. Meta `csrf-token` disponível para chamadas AJAX. |
+| `partials/navbar.blade.php` | Navbar escura responsiva. Marca/links à esquerda; à direita, dropdown com o nome do usuário (`@auth` + `auth()->user()->name`) e botão **Sair** (form `POST {{ route('logout') }}` + `@csrf`). Só apresentação. |
+| `partials/alerts.blade.php` | Flash messages lidas de `session('success')` / `session('error')` e a lista de `$errors` de validação, como alertas Bootstrap dismissíveis. Sem lógica de negócio. |
+| `dashboard.blade.php` | Página inicial (rota `/`, nome `dashboard`) que `@extends('layouts.app')`. Recebe `$usuario` do controller/closure (Blade sem lógica). Cards de atalho para Almoxarifados/Materiais/Movimentações — placeholders a serem ligados nas próximas etapas. Substitui a antiga `welcome.blade.php` (removida). |
+
+### Service (`app/Services`)
+
+| Arquivo | Responsabilidade |
+|---------|------------------|
+| `AuditLogService` | `registrar(string $operacao, array $payload = [], ?Request $request = null): AuditLog`. Grava em `audit_logs` capturando `user_id` (de `Auth::id()`), `ip` (do request atual — usa `request()` quando não informado) e `created_at` (`now()`, pois o model tem `$timestamps = false`). Ponto único de auditoria consumido pelos services de domínio. |
+
+### Rotas (`routes/web.php`)
+
+- `GET /` passou a renderizar `dashboard` (nome de rota `dashboard`), passando `usuario`
+  pela closure; o placeholder `welcome` foi removido.
+
+### Notas de implementação
+- Assets carregados por CDN (sem build Vite) para simplificar a entrega dockerizada.
+  jQuery vem **antes** do DataTables (dependência); Bootstrap bundle inclui o Popper.
+- Convenção de nomes de seção/yield em PT-BR: `@section('titulo')` e `@section('conteudo')`.
+
+### Pontos de extensão
+- Telas das próximas etapas devem `@extends('layouts.app')` e preencher `@section('conteudo')`;
+  scripts específicos (init de DataTables, SweetAlert2) vão em `@push('scripts')`.
+- Services de domínio (Almoxarifado/Material/Transferência/Estoque) injetam
+  `AuditLogService` e chamam `registrar()` em cada operação relevante, dentro da mesma
+  transação quando aplicável.
+- Flash de sucesso/erro: redirecionar com `->with('success', ...)` / `->with('error', ...)`;
+  o `partials/alerts` já os exibe.
