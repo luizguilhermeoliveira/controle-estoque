@@ -57,7 +57,7 @@ docker compose exec app php artisan tinker --execute="echo App\Models\Almoxarifa
 
 ## Etapa 2 — Autenticação própria
 
-**Status**: `[ ]` pendente
+**Status**: `[x]` concluída
 
 **Objetivo**: Login/logout próprios em Blade + Bootstrap (sem Breeze/Tailwind),
 protegendo todo o app via middleware `auth`. Usuário autenticado será o responsável

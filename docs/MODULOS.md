@@ -64,3 +64,49 @@ no pivot (mantido dentro de transações nas etapas de movimentação).
 - Etapa 2 (auth) usa o usuário admin do `DatabaseSeeder`.
 - Movimentações (Etapas 6–7) gravam em `movimentacoes` e ajustam o pivot + `quantidade_total`.
 - Toda operação relevante deve gravar em `audit_logs` (infra criada na Etapa 3).
+
+---
+
+## Etapa 2 — Autenticação própria
+
+Login/logout próprios em Blade + Bootstrap (sem Breeze/Tailwind), guard `web` padrão.
+O usuário autenticado será o responsável registrado nas movimentações e audit_logs
+(Etapas 6–7).
+
+### Controller (`app/Http/Controllers/Auth`)
+
+| Arquivo | Responsabilidade |
+|---------|------------------|
+| `LoginController` | Enxuto: `create()` exibe o formulário; `store(LoginRequest)` delega a autenticação ao request, regenera a sessão e redireciona para `intended('/')`; `destroy()` faz logout, invalida a sessão e regenera o token CSRF, voltando para `login`. |
+
+### FormRequest (`app/Http/Requests/Auth`)
+
+| Arquivo | Responsabilidade |
+|---------|------------------|
+| `LoginRequest` | Valida `email`/`password` (mensagens em PT-BR) e concentra a autenticação em `authenticate()`: `Auth::attempt` com suporte a "lembrar-me" e **rate limiting** (5 tentativas por e-mail+IP, evento `Lockout`). Credenciais inválidas e bloqueio por excesso de tentativas viram `ValidationException` com mensagem amigável — sem stack trace. |
+
+### View (`resources/views/auth`)
+
+| Arquivo | Responsabilidade |
+|---------|------------------|
+| `login.blade.php` | Tela de login **autônoma** (HTML completo + Bootstrap 5 via CDN), pois o layout master só nasce na Etapa 3. Só apresentação: erros vêm de `$errors`, status de `session('status')`; campos com `old()` e marcação `is-invalid`. Sem `@php` nem lógica. Inclui meta `csrf-token` e checkbox "Manter conectado". |
+
+### Rotas (`routes/web.php`)
+
+- Grupo `guest`: `GET /login` (`login`) e `POST /login` (`login.store`).
+- Grupo `auth`: `POST /logout` (`logout`) e a rota raiz `GET /` (placeholder `welcome`,
+  a ser substituída pelo dashboard/layout na Etapa 3).
+- O middleware `auth` redireciona visitantes para a rota nomeada `login`
+  automaticamente; o middleware `guest` redireciona usuários já logados para `/`.
+
+### Notas de implementação
+- **Permissões de arquivo:** `php artisan make:*` roda como `root` no container e gera
+  arquivos com dono `root`. Use `docker compose exec --user appuser app ...` (UID 1000,
+  igual ao host) para que os arquivos fiquem editáveis no host.
+- Guard `web` (sessão) é o padrão do `config/auth.php` — nenhuma alteração necessária.
+
+### Pontos de extensão
+- Etapa 3 cria o layout master (`layouts/app`) com navbar exibindo o usuário logado e o
+  botão de logout (form `POST /logout` + `@csrf`), e migra a `welcome` para um dashboard.
+- `Auth::user()` / `auth()->id()` fornece o responsável para `movimentacoes.user_id` e
+  `audit_logs.user_id` nas etapas seguintes.
