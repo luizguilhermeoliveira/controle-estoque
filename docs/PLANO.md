@@ -124,7 +124,7 @@ docker compose exec app php artisan tinker --execute="app(App\Services\AuditLogS
 
 ## Etapa 4 — CRUD Almoxarifados
 
-**Status**: `[ ]` pendente
+**Status**: `[x]` concluída
 
 **Objetivo**: Cadastro, listagem (com busca/paginação), edição e exclusão de
 almoxarifados, respeitando a regra de que almoxarifado com estoque associado NÃO pode ser
