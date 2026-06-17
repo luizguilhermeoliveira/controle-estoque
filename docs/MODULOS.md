@@ -214,3 +214,64 @@ a regra de domínio: almoxarifado com estoque associado não pode ser excluído.
   molde para o **CRUD de Materiais (Etapa 5)**.
 - A Etapa 8 pode evoluir a init de DataTables para um helper compartilhado; a Etapa 10
   pode trocar o modo client-side por server-side (endpoint `data()`).
+
+---
+
+## Etapa 5 — CRUD Materiais
+
+CRUD completo de materiais (listar/criar/editar/excluir) com busca/paginação via
+DataTables, confirmação de exclusão com SweetAlert2 e auditoria em cada operação.
+Reaproveita o molde da Etapa 4 (Service + FormRequests + resource controller sem `show`
++ partial `_form`). O cadastro lança o estoque inicial no pivot e mantém
+`quantidade_total` coerente com a soma das quantidades.
+
+### Service (`app/Services`)
+
+| Arquivo | Responsabilidade |
+|---------|------------------|
+| `MaterialService` | Regra de negócio dos materiais, mantendo o controller enxuto. Injeta `AuditLogService`. `criar`/`atualizar`/`excluir` rodam em `DB::transaction` e auditam (`material.criado`/`atualizado`/`excluido`). `criar` grava `quantidade_total = quantidade_inicial` e, quando essa quantidade é `> 0`, faz `attach` do saldo no pivot do almoxarifado informado. `atualizar` altera **apenas** `codigo_interno`/`descricao` (registra anterior/atual no payload) — não toca pivot nem `quantidade_total`, preservando a consistência do estoque (que só muda nas movimentações das Etapas 6–7). `excluir` faz `detach()` dos vínculos de estoque e remove o material. |
+
+### Controller (`app/Http/Controllers`)
+
+| Arquivo | Responsabilidade |
+|---------|------------------|
+| `MaterialController` | Resource **sem `show`**. Injeta `MaterialService`. `index` lista por `codigo_interno`; `create` envia os almoxarifados (`orderBy('nome')`) para o select de estoque inicial; `store`/`update` validam via FormRequest, delegam ao service e redirecionam com flash de sucesso; `destroy` exclui e redireciona com flash (exclusão de material é livre — sem regra de bloqueio). |
+
+### FormRequests (`app/Http/Requests`)
+
+| Arquivo | Responsabilidade |
+|---------|------------------|
+| `MaterialStoreRequest` | `authorize()` = `true`. `codigo_interno` obrigatório, `max:255`, **`unique:materiais`**; `descricao` obrigatória, `max:255`; `quantidade_inicial` obrigatória, `integer`, `min:0`; `almoxarifado_id` obrigatório **apenas quando `quantidade_inicial > 0`** (via `Rule::requiredIf`), `nullable`, `exists:almoxarifados,id`. Mensagens em PT-BR. |
+| `MaterialUpdateRequest` | Valida só os dados cadastrais: `codigo_interno` (`unique` ignorando o próprio via `Rule::unique(...)->ignore($this->route('material'))`) e `descricao`. Não recebe campos de estoque. Mensagens em PT-BR. |
+
+### Views (`resources/views/materiais`)
+
+| Arquivo | Responsabilidade |
+|---------|------------------|
+| `index.blade.php` | Tabela `#tabela-materiais` (código interno, descrição, quantidade total, ações). Inicializa **DataTables** (pt-BR, coluna de ações não ordenável) só quando há linhas; exclusão dispara confirmação **SweetAlert2** que submete o form `DELETE`. Estado vazio via `@forelse`. |
+| `create.blade.php` | Inclui o `_form` (campos cadastrais) e acrescenta a seção **Estoque inicial**: `select` de almoxarifado (`@selected` repovoado com `old`) + `quantidade_inicial` (`number`, `min=0`, default 0, com `form-text` explicando que 0 cadastra sem estoque). |
+| `edit.blade.php` | Inclui o `_form` com `@method('PUT')`. Edita só os dados cadastrais (sem campos de estoque). |
+| `_form.blade.php` | Partial com `codigo_interno`/`descricao`, reaproveitado por create/edit. Repovoa com `old(..., $material->campo ?? '')` e marca `is-invalid` via `@error`. Sem `@php`. |
+
+### Rotas (`routes/web.php`)
+
+- `Route::resource('materiais', MaterialController::class)->except('show')` no grupo `auth`,
+  com `->parameters(['materiais' => 'material'])` para route-model binding no singular
+  (`{material}`).
+
+### Integração com o layout
+
+- Navbar (`partials/navbar`) ganhou link **Materiais**; o card de Materiais do `dashboard`
+  agora linka para `materiais.index`.
+
+### Notas de implementação
+- Exclusão de material é livre (diferente de almoxarifado): o `detach()` dos vínculos de
+  estoque ocorre dentro da transação antes do `delete()`, e a operação é auditada.
+- `quantidade_total` no cadastro reflete o saldo lançado no pivot; alterações de saldo
+  ficam reservadas às movimentações (Etapas 6–7), que devem manter os dois sincronizados.
+
+### Pontos de extensão
+- As Etapas 6 (transferência) e 7 (entrada/saída) consomem o material e o pivot já
+  populados; ao mover saldo, atualizam pivot **e** `quantidade_total` dentro da mesma
+  transação, reusando o `AuditLogService`.
+- A Etapa 10 pode adicionar endpoint `data()` server-side à listagem de materiais.

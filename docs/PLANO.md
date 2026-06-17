@@ -159,7 +159,7 @@ docker compose exec app php artisan route:list --name=almoxarifados
 
 ## Etapa 5 — CRUD Materiais
 
-**Status**: `[ ]` pendente
+**Status**: `[x]` concluída
 
 **Objetivo**: Cadastro (codigo_interno único + descricao + quantidade), listagem e
 exclusão de materiais. Operações geram auditoria.

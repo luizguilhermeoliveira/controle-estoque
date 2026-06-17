@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AlmoxarifadoController;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\MaterialController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -31,4 +32,8 @@ Route::middleware('auth')->group(function () {
     Route::resource('almoxarifados', AlmoxarifadoController::class)
         ->except('show')
         ->parameters(['almoxarifados' => 'almoxarifado']);
+
+    Route::resource('materiais', MaterialController::class)
+        ->except('show')
+        ->parameters(['materiais' => 'material']);
 });
