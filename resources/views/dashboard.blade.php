@@ -12,14 +12,14 @@
 
     <div class="row g-3">
         <div class="col-12 col-md-6 col-lg-4">
-            <div class="card shadow-sm border-0 h-100">
+            <a href="{{ route('almoxarifados.index') }}" class="card shadow-sm border-0 h-100 text-decoration-none text-reset">
                 <div class="card-body">
                     <h2 class="h5 card-title">
                         <i class="bi bi-building me-1"></i> Almoxarifados
                     </h2>
                     <p class="card-text text-muted">Cadastro e gestão dos almoxarifados.</p>
                 </div>
-            </div>
+            </a>
         </div>
         <div class="col-12 col-md-6 col-lg-4">
             <div class="card shadow-sm border-0 h-100">

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AlmoxarifadoController;
 use App\Http\Controllers\Auth\LoginController;
 use Illuminate\Support\Facades\Route;
 
@@ -26,4 +27,8 @@ Route::middleware('auth')->group(function () {
             'usuario' => auth()->user()->name,
         ]);
     })->name('dashboard');
+
+    Route::resource('almoxarifados', AlmoxarifadoController::class)
+        ->except('show')
+        ->parameters(['almoxarifados' => 'almoxarifado']);
 });

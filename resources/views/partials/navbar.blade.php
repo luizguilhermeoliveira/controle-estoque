@@ -21,6 +21,9 @@
                 <li class="nav-item">
                     <a class="nav-link" href="{{ url('/') }}">Início</a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ route('almoxarifados.index') }}">Almoxarifados</a>
+                </li>
             </ul>
 
             @auth

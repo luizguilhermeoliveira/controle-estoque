@@ -151,3 +151,66 @@ transversal de auditoria (`AuditLogService`) que as demais etapas consomem.
   transação quando aplicável.
 - Flash de sucesso/erro: redirecionar com `->with('success', ...)` / `->with('error', ...)`;
   o `partials/alerts` já os exibe.
+
+---
+
+## Etapa 4 — CRUD Almoxarifados
+
+CRUD completo de almoxarifados (listar/criar/editar/excluir) com busca/paginação via
+DataTables, confirmação de exclusão com SweetAlert2 e auditoria em cada operação. Aplica
+a regra de domínio: almoxarifado com estoque associado não pode ser excluído.
+
+### Exceção de domínio (`app/Exceptions`)
+
+| Arquivo | Responsabilidade |
+|---------|------------------|
+| `RegraDeNegocioException` | `RuntimeException` com **mensagem amigável** ao usuário final (sem stack trace). Lançada pelos services quando uma operação viola uma regra de negócio; capturada pelos controllers e convertida em flash de erro. Reaproveitável nas próximas etapas (saída sem saldo, transferência inválida etc.). |
+
+### Service (`app/Services`)
+
+| Arquivo | Responsabilidade |
+|---------|------------------|
+| `AlmoxarifadoService` | Regra de negócio dos almoxarifados, mantendo o controller enxuto. Injeta `AuditLogService`. `criar`/`atualizar`/`excluir` rodam em `DB::transaction` e auditam (`almoxarifado.criado`/`atualizado`/`excluido`); a atualização registra valores anterior/atual no payload. `excluir` bloqueia (lança `RegraDeNegocioException`) se `possuiEstoque()` — pivot com `quantidade > 0`; caso contrário faz `detach()` de pivôs zerados e exclui. |
+
+### Controller (`app/Http/Controllers`)
+
+| Arquivo | Responsabilidade |
+|---------|------------------|
+| `AlmoxarifadoController` | Resource **sem `show`**. Injeta `AlmoxarifadoService`. `index` lista com `withCount('materiais')` ordenado por nome; `create`/`edit` exibem formulários; `store`/`update` validam via FormRequest, delegam ao service e redirecionam com flash de sucesso; `destroy` captura `RegraDeNegocioException` e redireciona com flash de erro. |
+
+### FormRequests (`app/Http/Requests`)
+
+| Arquivo | Responsabilidade |
+|---------|------------------|
+| `AlmoxarifadoStoreRequest` / `AlmoxarifadoUpdateRequest` | `authorize()` = `true` (acesso já protegido pelo middleware `auth`). Regras idênticas: `nome` e `localizacao` obrigatórios, string, `max:255`. Mensagens em PT-BR. |
+
+### Views (`resources/views/almoxarifados`)
+
+| Arquivo | Responsabilidade |
+|---------|------------------|
+| `index.blade.php` | Tabela `#tabela-almoxarifados` (nome, localização, contagem de materiais, ações). Inicializa **DataTables** (idioma pt-BR via CDN, coluna de ações não ordenável) só quando há linhas. Botão excluir dispara confirmação **SweetAlert2** que então submete o form `DELETE` (`@method('DELETE')`). Estado vazio tratado com `@forelse`. |
+| `create.blade.php` / `edit.blade.php` | Formulários Bootstrap; `edit` usa `@method('PUT')`. Ambos incluem o partial de campos. |
+| `_form.blade.php` | Partial com os campos `nome`/`localizacao`, reaproveitado por create/edit. Repovoa com `old(..., $almoxarifado->campo ?? '')` e marca `is-invalid` via `@error`. Sem `@php`. |
+
+### Rotas (`routes/web.php`)
+
+- `Route::resource('almoxarifados', AlmoxarifadoController::class)->except('show')` no grupo
+  `auth`, com `->parameters(['almoxarifados' => 'almoxarifado'])` para route-model binding
+  no singular (`{almoxarifado}`).
+
+### Integração com o layout
+
+- Navbar (`partials/navbar`) ganhou link **Almoxarifados**; o card de Almoxarifados do
+  `dashboard` agora linka para `almoxarifados.index`.
+
+### Notas de implementação
+- Route-model binding implícito (`Almoxarifado $almoxarifado`) — 404 automático para id inexistente.
+- A confirmação destrutiva fica na view (SweetAlert2 intercepta o `submit`); a regra de
+  bloqueio por estoque é do **server** (`AlmoxarifadoService`), nunca confiando só no front.
+
+### Pontos de extensão
+- `RegraDeNegocioException` é o padrão para erros de negócio amigáveis nas Etapas 5–7.
+- O par Service + FormRequests + resource controller (sem `show`) + partial `_form` é o
+  molde para o **CRUD de Materiais (Etapa 5)**.
+- A Etapa 8 pode evoluir a init de DataTables para um helper compartilhado; a Etapa 10
+  pode trocar o modo client-side por server-side (endpoint `data()`).
