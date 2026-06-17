@@ -24,6 +24,9 @@
                 <li class="nav-item">
                     <a class="nav-link" href="{{ route('almoxarifados.index') }}">Almoxarifados</a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ route('materiais.index') }}">Materiais</a>
+                </li>
             </ul>
 
             @auth

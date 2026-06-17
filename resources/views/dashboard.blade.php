@@ -22,14 +22,14 @@
             </a>
         </div>
         <div class="col-12 col-md-6 col-lg-4">
-            <div class="card shadow-sm border-0 h-100">
+            <a href="{{ route('materiais.index') }}" class="card shadow-sm border-0 h-100 text-decoration-none text-reset">
                 <div class="card-body">
                     <h2 class="h5 card-title">
                         <i class="bi bi-box-seam me-1"></i> Materiais
                     </h2>
                     <p class="card-text text-muted">Cadastro e controle de materiais.</p>
                 </div>
-            </div>
+            </a>
         </div>
         <div class="col-12 col-md-6 col-lg-4">
             <div class="card shadow-sm border-0 h-100">
